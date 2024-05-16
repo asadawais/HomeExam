@@ -12,6 +12,7 @@ FIN = 0x04
 def parse_arguments():
     parser = argparse.ArgumentParser(description="DRTP Server for reliable file transfer over UDP")
     parser.add_argument('-p', '--port', type=int, required=True, help="Port number to listen on")
+    parser.add_argument('-d', '--discard', type=int, default=None, help="Sequence number of packet to discard")  # Added for discard flag
     return parser.parse_args()
 
 def make_header(seq_num, ack_num, flags):
@@ -33,7 +34,7 @@ def setup_server(port):
 def timestamp():
     return datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
-def receive_file(sock):
+def receive_file(sock, discard_seq):
     print("Server is listening for connections...")
     start_time = None
     data_received = 0
@@ -63,6 +64,11 @@ def receive_file(sock):
                 # Data packet handling
                 data = packet[6:]
                 if data:
+                    if seq_num == discard_seq:
+                        print(f"Discarding packet {seq_num}")
+                        discard_seq = float('inf')  # Disable further discarding
+                        continue
+
                     if not start_time:
                         start_time = time.time()
                     data_received += len(data)
@@ -83,4 +89,4 @@ def receive_file(sock):
 if __name__ == "__main__":
     args = parse_arguments()
     server_socket = setup_server(args.port)
-    receive_file(server_socket)
+    receive_file(server_socket, args.discard)
