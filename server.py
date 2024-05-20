@@ -12,9 +12,6 @@ FIN = 0x04
 def parse_arguments():
     """
     Parse command-line arguments.
-    
-    Returns:
-        argparse.Namespace: Parsed command-line arguments.
     """
     parser = argparse.ArgumentParser(description="DRTP Server for reliable file transfer over UDP")
     parser.add_argument('-p', '--port', type=int, required=True, help="Port number to listen on")
@@ -24,41 +21,18 @@ def parse_arguments():
 def make_header(seq_num, ack_num, flags):
     """
     Create a DRTP header.
-    
-    Args:
-        seq_num (int): Sequence number.
-        ack_num (int): Acknowledgment number.
-        flags (int): Flags for DRTP.
-        
-    Returns:
-        bytes: Packed header.
     """
     return struct.pack('!HHH', seq_num, ack_num, flags)
 
 def parse_header(packet):
     """
     Parse a DRTP header.
-    
-    Args:
-        packet (bytes): Packet containing the header.
-        
-    Returns:
-        tuple: Unpacked header values (seq_num, ack_num, flags).
     """
     return struct.unpack('!HHH', packet[:6])
 
 def make_packet(seq_num, ack_num, flags, payload=b''):
     """
     Create a complete packet with header and payload.
-    
-    Args:
-        seq_num (int): Sequence number.
-        ack_num (int): Acknowledgment number.
-        flags (int): Flags for DRTP.
-        payload (bytes, optional): Data to be included in the packet. Defaults to an empty byte string.
-        
-    Returns:
-        bytes: Complete packet.
     """
     header = make_header(seq_num, ack_num, flags)
     return header + payload
@@ -66,12 +40,6 @@ def make_packet(seq_num, ack_num, flags, payload=b''):
 def setup_server(port):
     """
     Set up the server socket.
-    
-    Args:
-        port (int): Port number to listen on.
-        
-    Returns:
-        socket.socket: Configured UDP socket.
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('', port))
@@ -80,19 +48,12 @@ def setup_server(port):
 def timestamp():
     """
     Get the current timestamp.
-    
-    Returns:
-        str: Current timestamp in the format HH:MM:SS.mmm.
     """
     return datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
 def receive_file(sock, discard_seq):
     """
     Receive a file from a client.
-    
-    Args:
-        sock (socket.socket): UDP socket to use for communication.
-        discard_seq (int): Sequence number of packet to discard.
     """
     print("Server is listening for connections...")
     start_time = None
