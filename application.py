@@ -36,6 +36,9 @@ class Server:
         self.socket.bind((self.ip, self.port))
         self.received_packets = {}
         self.expected_seq = 1
+        self.start_time = None
+        self.end_time = None
+        self.total_data_received = 0
 
     def start(self):
         print("Server started")
@@ -47,7 +50,10 @@ class Server:
                 self.handle_syn(client_address)
             elif flags & FIN_FLAG:
                 self.handle_fin(client_address)
+                break
             else:
+                if self.start_time is None:
+                    self.start_time = datetime.now()
                 self.handle_data(seq_num, data, client_address)
 
     def handle_syn(self, client_address):
@@ -60,6 +66,8 @@ class Server:
         print("FIN packet is received")
         fin_ack_packet = create_packet(0, 0, FIN_FLAG | ACK_FLAG)
         self.socket.sendto(fin_ack_packet, client_address)
+        self.end_time = datetime.now()
+        self.calculate_throughput()
         print("FIN ACK packet is sent")
         print("Connection Closes")
 
@@ -77,8 +85,15 @@ class Server:
             self.socket.sendto(ack_packet, client_address)
             print(f"{current_time} -- Packet {seq_num} is received")
             print(f"{current_time} -- Sending ACK for the received {seq_num}")
+            self.total_data_received += len(data)
         else:
             print(f"{current_time} -- Out-of-order packet {seq_num} is received")
+
+    def calculate_throughput(self):
+        total_time_taken = (self.end_time - self.start_time).total_seconds()  # in seconds
+        throughput = self.total_data_received / total_time_taken  # in bytes per second
+        throughput_mbps = (throughput * 8) / (1024 * 1024)  # Convert bytes/sec to Mbps
+        print(f"Server Throughput: {throughput_mbps:.2f} Mbps")
 
 class Client:
     def __init__(self, filename, server_ip, server_port, window_size):
@@ -175,6 +190,7 @@ class Client:
                 _, _, flags, _ = parse_packet(packet)
                 if flags & FIN_FLAG and flags & ACK_FLAG:
                     print("FIN ACK packet is received")
+                    self.calculate_throughput()
                     print("Connection Closes")
                     break
             except socket.timeout:
@@ -208,7 +224,7 @@ class Client:
         total_time_taken = (self.end_time - self.start_time).total_seconds()  # in seconds
         throughput = total_data_transferred / total_time_taken  # in bytes per second
         throughput_mbps = (throughput * 8) / (1024 * 1024)  # Convert bytes/sec to Mbps
-        print(f"Throughput: {throughput_mbps:.2f} Mbps")
+        print(f"Client Throughput: {throughput_mbps:.2f} Mbps")
 
     def window_status(self):
         return {i for i in range(self.base, self.next_seq)}
