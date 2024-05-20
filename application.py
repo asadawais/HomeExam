@@ -66,7 +66,7 @@ class Server:
     def handle_data(self, seq_num, data, client_address):
         current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]  # Formatting the current time
         if seq_num == self.discard_seq:
-            print(f"{current_time} -- Packet {seq_num} is received and discarded")
+            print(f"{current_time} -- Packet {seq_num} is discarded")
             self.discard_seq = float('inf')  # Stop discarding this sequence
             return
 
@@ -192,7 +192,6 @@ class Client:
             self.stop_timer()
             current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]  # Formatting the current time
             print(f"{current_time} -- RTO occurred")
-            print(f"{current_time} -- Retransmitting packets from seq = {self.base}")
             while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
                 self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
                 print(f"{current_time} -- Retransmitting packet with seq = {self.next_seq}")
