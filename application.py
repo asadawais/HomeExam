@@ -66,7 +66,7 @@ class Server:
     def handle_data(self, seq_num, data, client_address):
         current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]  # Formatting the current time
         if seq_num == self.discard_seq:
-            print(f"{current_time} -- Packet {seq_num} is discarded")
+            print(f"{current_time} -- Packet {seq_num} is received and discarded")
             self.discard_seq = float('inf')  # Stop discarding this sequence
             return
 
