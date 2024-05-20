@@ -94,12 +94,17 @@ class Client:
         self.acks = set()
         self.lock = threading.Lock()
         self.timer = None
+        self.start_time = None
+        self.end_time = None
 
     def start(self):
         self.create_packets()
         self.establish_connection()
+        self.start_time = datetime.now()  # Record start time
         self.send_packets()
+        self.end_time = datetime.now()  # Record end time
         self.tear_down_connection()
+        self.calculate_throughput()
 
     def create_packets(self):
         with open(self.filename, 'rb') as file:
@@ -140,7 +145,7 @@ class Client:
                 while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
                     self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
                     current_time = datetime.now().strftime('%H:%M:%S.%f')[:-3]  # Formatting the current time
-                    print(f"{current_time} -- Packet with seq = {self.next_seq} is sent, sliding window = {self.window_status()}")
+                    print(f"{current_time} -- Packet {self.next_seq} is sent, sliding window = {self.window_status()}")
                     self.next_seq += 1
 
             self.start_timer()
@@ -194,9 +199,16 @@ class Client:
             print(f"{current_time} -- RTO occurred")
             while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
                 self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
-                print(f"{current_time} -- Retransmitting packet with seq = {self.next_seq}")
+                print(f"{current_time} -- Retransmitting packet {self.next_seq}")
                 self.next_seq += 1
             self.start_timer()
+
+    def calculate_throughput(self):
+        total_data_transferred = sum(len(packet) for packet in self.packets)  # in bytes
+        total_time_taken = (self.end_time - self.start_time).total_seconds()  # in seconds
+        throughput = total_data_transferred / total_time_taken  # in bytes per second
+        throughput_mbps = (throughput * 8) / (1024 * 1024)  # Convert bytes/sec to Mbps
+        print(f"Throughput: {throughput_mbps:.2f} Mbps")
 
     def window_status(self):
         return {i for i in range(self.base, self.next_seq)}
