@@ -93,7 +93,7 @@ class Server:
         total_time_taken = (self.end_time - self.start_time).total_seconds()  # in seconds
         throughput = self.total_data_received / total_time_taken  # in bytes per second
         throughput_mbps = (throughput * 8) / (1024 * 1024)  # Convert bytes/sec to Mbps
-        print(f"Server Throughput: {throughput_mbps:.2f} Mbps")
+        print(f"Throughput: {throughput_mbps:.2f} Mbps")
 
 class Client:
     def __init__(self, filename, server_ip, server_port, window_size):
@@ -223,7 +223,7 @@ class Client:
         total_time_taken = (self.end_time - self.start_time).total_seconds()  # in seconds
         throughput = total_data_transferred / total_time_taken  # in bytes per second
         throughput_mbps = (throughput * 8) / (1024 * 1024)  # Convert bytes/sec to Mbps
-        print(f"Client Throughput: {throughput_mbps:.2f} Mbps")
+        print(f"Throughput: {throughput_mbps:.2f} Mbps")
 
     def window_status(self):
         return {i for i in range(self.base, self.next_seq)}
