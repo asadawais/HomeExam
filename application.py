@@ -63,8 +63,9 @@ class Server:
         print("Connection Closes")
 
     def handle_data(self, seq_num, data, client_address):
+        current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
         if seq_num == self.discard_seq:
-            print(f"Packet {seq_num} is received and discarded")
+            print(f"{current_time} -- packet {seq_num} is received and discarded")
             self.discard_seq = float('inf')  # Stop discarding this sequence
             return
 
@@ -73,10 +74,10 @@ class Server:
             self.expected_seq += 1
             ack_packet = create_packet(0, seq_num, ACK_FLAG)
             self.socket.sendto(ack_packet, client_address)
-            print(f"{time.time()} -- packet {seq_num} is received")
-            print(f"{time.time()} -- sending ack for the received {seq_num}")
+            print(f"{current_time} -- packet {seq_num} is received")
+            print(f"{current_time} -- sending ack for the received {seq_num}")
         else:
-            print(f"{time.time()} -- out-of-order packet {seq_num} is received")
+            print(f"{current_time} -- out-of-order packet {seq_num} is received")
 
 class Client:
     def __init__(self, filename, server_ip, server_port, window_size):
@@ -137,7 +138,8 @@ class Client:
             with self.lock:
                 while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
                     self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
-                    print(f"{time.time()} -- packet with seq = {self.next_seq} is sent, sliding window = {self.window_status()}")
+                    current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+                    print(f"{current_time} -- packet with seq = {self.next_seq} is sent, sliding window = {self.window_status()}")
                     self.next_seq += 1
 
             self.start_timer()
@@ -147,7 +149,8 @@ class Client:
                 if flags & ACK_FLAG:
                     with self.lock:
                         self.acks.add(ack_num)
-                        print(f"{time.time()} -- ACK for packet = {ack_num} is received")
+                        current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+                        print(f"{current_time} -- ACK for packet = {ack_num} is received")
                         if ack_num >= self.base:
                             self.base = ack_num + 1
                             self.stop_timer()
@@ -186,12 +189,12 @@ class Client:
         with self.lock:
             self.next_seq = self.base
             self.stop_timer()
-            print(f"{time.time()} -- RTO occurred")
-            print(f"{time.time()} -- retransmitting packets from seq = {self.base}")
-            while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
-                self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
-                print(f"{time.time()} -- retransmitting packet with seq = {self.next_seq}")
-                self.next_seq += 1
+            current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+            print(f"{current_time} -- RTO occurred")
+            for seq in range(self.base, self.base + self.window_size):
+                if seq <= len(self.packets):
+                    self.socket.sendto(self.packets[seq - 1], (self.server_ip, self.server_port))
+                    print(f"{current_time} -- retransmitting packet with seq = {seq}")
             self.start_timer()
 
     def window_status(self):
