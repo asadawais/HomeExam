@@ -60,6 +60,7 @@ class Server:
         fin_ack_packet = create_packet(0, 0, FIN_FLAG | ACK_FLAG)
         self.socket.sendto(fin_ack_packet, client_address)
         print("FIN ACK packet is sent")
+        print("Connection Closes")
 
     def handle_data(self, seq_num, data, client_address):
         if seq_num == self.discard_seq:
@@ -72,9 +73,10 @@ class Server:
             self.expected_seq += 1
             ack_packet = create_packet(0, seq_num, ACK_FLAG)
             self.socket.sendto(ack_packet, client_address)
-            print(f"Sending ACK for the received {seq_num}")
+            print(f"{time.time()} -- packet {seq_num} is received")
+            print(f"{time.time()} -- sending ack for the received {seq_num}")
         else:
-            print(f"Out-of-order packet {seq_num} is received")
+            print(f"{time.time()} -- out-of-order packet {seq_num} is received")
 
 class Client:
     def __init__(self, filename, server_ip, server_port, window_size):
@@ -185,6 +187,12 @@ class Client:
             self.next_seq = self.base
             self.stop_timer()
             print(f"{time.time()} -- RTO occurred")
+            print(f"{time.time()} -- retransmitting packets from seq = {self.base}")
+            while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
+                self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
+                print(f"{time.time()} -- retransmitting packet with seq = {self.next_seq}")
+                self.next_seq += 1
+            self.start_timer()
 
     def window_status(self):
         return {i for i in range(self.base, self.next_seq)}
