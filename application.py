@@ -63,7 +63,7 @@ class Server:
         print("Connection Closes")
 
     def handle_data(self, seq_num, data, client_address):
-        current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+        current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int((time.time() % 1) * 1e6))
         if seq_num == self.discard_seq:
             print(f"{current_time} -- packet {seq_num} is received and discarded")
             self.discard_seq = float('inf')  # Stop discarding this sequence
@@ -138,7 +138,7 @@ class Client:
             with self.lock:
                 while self.next_seq < self.base + self.window_size and self.next_seq <= len(self.packets):
                     self.socket.sendto(self.packets[self.next_seq - 1], (self.server_ip, self.server_port))
-                    current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+                    current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int((time.time() % 1) * 1e6))
                     print(f"{current_time} -- packet with seq = {self.next_seq} is sent, sliding window = {self.window_status()}")
                     self.next_seq += 1
 
@@ -149,7 +149,7 @@ class Client:
                 if flags & ACK_FLAG:
                     with self.lock:
                         self.acks.add(ack_num)
-                        current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+                        current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int((time.time() % 1) * 1e6))
                         print(f"{current_time} -- ACK for packet = {ack_num} is received")
                         if ack_num >= self.base:
                             self.base = ack_num + 1
@@ -189,7 +189,7 @@ class Client:
         with self.lock:
             self.next_seq = self.base
             self.stop_timer()
-            current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int(time.time() * 1e6) % 1e6)
+            current_time = time.strftime('%H:%M:%S', time.localtime(time.time())) + ".{:06d}".format(int((time.time() % 1) * 1e6))
             print(f"{current_time} -- RTO occurred")
             for seq in range(self.base, self.base + self.window_size):
                 if seq <= len(self.packets):
