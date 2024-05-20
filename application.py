@@ -118,8 +118,8 @@ class Client:
         self.start_time = datetime.now()  # Record start time
         self.send_packets()
         self.end_time = datetime.now()  # Record end time
-        self.tear_down_connection()
         self.calculate_throughput()
+        self.tear_down_connection()
 
     def create_packets(self):
         with open(self.filename, 'rb') as file:
@@ -190,7 +190,6 @@ class Client:
                 _, _, flags, _ = parse_packet(packet)
                 if flags & FIN_FLAG and flags & ACK_FLAG:
                     print("FIN ACK packet is received")
-                    self.calculate_throughput()
                     print("Connection Closes")
                     break
             except socket.timeout:
